@@ -1,149 +1,153 @@
 import React, { useState } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Checkbox,
-  Typography,
-  Row,
-  Col,
-  Card,
-  message,
-} from "antd";
-import { wrapper, site_form_item_icon } from "./style.module.css";
-import { MailOutlined, LockOutlined } from "@ant-design/icons";
-import { Link, useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../../firebase/firebaseConfig";
-
-const { Title } = Typography;
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { MailOutlined, LockOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 
 function Login() {
   const navigate = useNavigate();
-  const [form] = Form.useForm();
   const [formLogin, setFormLogin] = useState({
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState({});
+  const [remember, setRemember] = useState(false);
 
-  const handleLogin = () => {
-    console.log(formLogin);
-    signInWithEmailAndPassword(auth, formLogin.email, formLogin.password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        console.log(user);
-        message.success("Login successful");
-        navigate("/layout/products");
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.error(`Error [${errorCode}]: ${errorMessage}`);
-        switch (errorCode) {
-          case "auth/email-already-in-use":
-            message.error(
-              "This email is already in use. Please try another one."
-            );
-            break;
-          case "auth/invalid-email":
-            message.error("The email address is not valid.");
-            break;
-          case "auth/wrong-password":
-            message.error("The password is incorrect.");
-            break;
-          case "auth/user-not-found":
-            message.error("No user found with this email.");
-            break;
-          default:
-            message.error(errorMessage);
-        }
-      });
+  const validate = () => {
+    const newErrors = {};
+    if (!formLogin.email) {
+      newErrors.email = "Please input your Email!";
+    } else if (!/\S+@\S+\.\S+/.test(formLogin.email)) {
+      newErrors.email = "The input is not valid E-mail!";
+    }
+    if (!formLogin.password) {
+      newErrors.password = "Please input your Password!";
+    } else if (
+      !/^(?=.*[a-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/.test(formLogin.password)
+    ) {
+      newErrors.password =
+        "Password must be at least 8 characters long, include uppercase and lowercase letters, a number, and a special character!";
+    }
+    return newErrors;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length === 0) {
+      signInWithEmailAndPassword(auth, formLogin.email, formLogin.password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          console.log(user);
+          alert("Login successful");
+          navigate("/layout/products");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.error(`Error [${errorCode}]: ${errorMessage}`);
+          switch (errorCode) {
+            case "auth/email-already-in-use":
+              alert("This email is already in use. Please try another one.");
+              break;
+            case "auth/invalid-email":
+              alert("The email address is not valid.");
+              break;
+            case "auth/wrong-password":
+              alert("The password is incorrect.");
+              break;
+            case "auth/user-not-found":
+              alert("No user found with this email.");
+              break;
+            default:
+              alert(errorMessage);
+          }
+        });
+    } else {
+      setErrors(validationErrors);
+    }
   };
 
   return (
-    <div className={wrapper}>
-      <Row justify="center" align="middle" style={{ minHeight: "100vh" }}>
-        <Col>
-          <Card style={{ width: 300 }}>
-            <Title level={2} style={{ textAlign: "center" }}>
-              Login
-            </Title>
-            <Form
-              form={form}
-              name="login"
-              initialValues={{ remember: true }}
-              onFinish={handleLogin}
-            >
-              <Form.Item
-                name="email"
-                rules={[
-                  { required: true, message: "Please input your Email!" },
-                  { type: "email", message: "The input is not valid E-mail!" },
-                ]}
-              >
-                <Input
-                  prefix={<MailOutlined className={site_form_item_icon} />}
-                  placeholder="Email"
-                  value={formLogin.email}
-                  onChange={(e) =>
-                    setFormLogin({ ...formLogin, email: e.target.value })
-                  }
-                />
-              </Form.Item>
+    <div className="flex justify-center items-center min-h-screen bg-blue-600">
+      <div className="w-full max-w-sm p-6 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-gray-700">
+              Email
+            </label>
+            <div className="flex items-center border rounded-md">
+              <MailOutlined className="text-gray-400 p-2" />
+              <input
+                type="email"
+                id="email"
+                className="w-full p-2 focus:outline-none"
+                placeholder="Email"
+                value={formLogin.email}
+                onChange={(e) =>
+                  setFormLogin({ ...formLogin, email: e.target.value })
+                }
+              />
+            </div>
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
+          </div>
 
-              <Form.Item
-                name="password"
-                rules={[
-                  { required: true, message: "Please input your Password!" },
-                  {
-                    pattern: /^(?=.*[a-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/,
-                    message:
-                      "Password must be at least 8 characters long, include uppercase and lowercase letters, a number, and a special character!",
-                  },
-                ]}
-                style={{ marginTop: "30px" }}
-              >
-                <Input.Password
-                  prefix={<LockOutlined className={site_form_item_icon} />}
-                  placeholder="Password"
-                  value={formLogin.password}
-                  onChange={(e) =>
-                    setFormLogin({ ...formLogin, password: e.target.value })
-                  }
-                />
-              </Form.Item>
+          <div className="mb-4">
+            <label htmlFor="password" className="block text-gray-700">
+              Password
+            </label>
+            <div className="flex items-center border rounded-md">
+              <LockOutlined className="text-gray-400 p-2" />
+              <input
+                type="password"
+                id="password"
+                className="w-full p-2 focus:outline-none"
+                placeholder="Password"
+                value={formLogin.password}
+                onChange={(e) =>
+                  setFormLogin({ ...formLogin, password: e.target.value })
+                }
+              />
+            </div>
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            )}
+          </div>
 
-              <Form.Item>
-                <Form.Item name="remember" valuePropName="checked" noStyle>
-                  <Checkbox>Remember me</Checkbox>
-                </Form.Item>
+          <div className="flex items-center justify-between mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+              />
+              Remember me
+            </label>
+            <a className="text-blue-600 hover:underline" href="">
+              Forgot password
+            </a>
+          </div>
 
-                <a
-                  className="login-form-forgot"
-                  href=""
-                  style={{ float: "right" }}
-                >
-                  Forgot password
-                </a>
-              </Form.Item>
+          <button
+            type="submit"
+            className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300"
+          >
+            Log in
+          </button>
 
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  style={{ width: "100%" }}
-                >
-                  Log in
-                </Button>
-              </Form.Item>
-
-              <Form.Item>
-                Or <Link to="/register">register now!</Link>
-              </Form.Item>
-            </Form>
-          </Card>
-        </Col>
-      </Row>
+          <div className="mt-4 text-center">
+            Or{" "}
+            <Link to="/register" className="text-blue-600 hover:underline">
+              register now!
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
