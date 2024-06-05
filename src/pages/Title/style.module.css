@@ -1,0 +1,9 @@
+.title {
+  margin-bottom: 20px;
+  font-size: 32px;
+  color: #1976d2;
+  text-align: left;
+  margin-right: auto;
+  border-left: 3px solid #1976d2;
+  padding-left: 10px;
+}

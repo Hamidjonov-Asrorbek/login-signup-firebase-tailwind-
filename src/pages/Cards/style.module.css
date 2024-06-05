@@ -1,0 +1,17 @@
+.icon {
+  transition: all 0.4s ease-in-out;
+  transform: scale(1);
+  border: none;
+  border-radius: 50%;
+  padding: 5px;
+  zoom: 1.5;
+  color: red;
+}
+
+.icon:hover {
+  color: red;
+  cursor: pointer;
+  border: 1px solid red;
+  transition: all 0.4s ease-in-out;
+  transform: scale(1.2);
+}
